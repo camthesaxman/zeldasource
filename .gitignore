@@ -1,0 +1,4 @@
+# Ignore output files
+*.nes
+*.o
+memmap.txt
