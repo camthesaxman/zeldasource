@@ -10,7 +10,7 @@ CA65 := $(CC65_HOME)/bin/ca65
 LD65 := $(CC65_HOME)/bin/ld65
 
 ROM := zelda.nes
-OBJECTS := zelda.o
+OBJECTS := zelda.o bank0.o bank1.o bank2.o bank3.o bank4.o bank5.o bank6.o bank7.o
 
 all: $(ROM) verify
 
@@ -21,9 +21,6 @@ clean:
 	rm -rf $(ROM) $(OBJECTS) memmap.txt
 	
 %.o: %.asm
-	$(CA65) -t nes $^ -o $@
-	
-%.o: %.s
 	$(CA65) -t nes $^ -o $@
 
 $(ROM): $(OBJECTS)
