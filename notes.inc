@@ -1,6 +1,7 @@
-G_7		= $00
+SONG_END= $00
 C_6		= $02
 Db_3	= $04
+Gb_5	= $06
 REST	= $08
 D_3		= $0A
 Eb_3	= $0C
@@ -30,7 +31,6 @@ D_5		= $3A
 Eb_5	= $3C
 E_5		= $3E
 F_5		= $40
-; No Gb_5
 G_5		= $42
 Ab_5	= $44
 Bb_5	= $46
@@ -55,3 +55,12 @@ A_2		= $6A
 Bb_2	= $6C
 B_2		= $6E
 C_3		= $70
+
+QUARTER_TRIPLET		= $87
+DOTTED_HALF_NOTE	= $86
+HALF_NOTE			= $85
+DOTTED_QUARTER_NOTE	= $84
+QUARTER_NOTE		= $83
+EIGHTH_NOTE			= $81
+SIXTEENTH_NOTE		= $80
+EIGHTH_TRIPLET		= $82

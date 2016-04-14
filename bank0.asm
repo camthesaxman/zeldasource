@@ -834,19 +834,19 @@ lbl_9ce1:
 	LSR
 	BCC lbl_9ce1
 lbl_9ce5:	;Y = song id
-	LDA songTable-1,Y		;Get offset of song descriptor
-	TAY
-	LDA songTable,Y			;Note delay?
+	LDA songTable - 1, Y
+	TAY													;Y = offset of song descriptor
+	LDA songTable + SongDescriptor::unk1, Y				;Note delay?
 	STA $05F4
-	LDA songTable+1,Y		;Get address of music data (voice A)
+	LDA songTable + SongDescriptor::musicDataPtr, Y		;Get address of music data
 	STA musicData	;low byte
-	LDA songTable+2,Y
+	LDA songTable + SongDescriptor::musicDataPtr+1, Y
 	STA musicData+1	;high byte
-	LDA songTable+3,Y		;Get offset of music data for voice C
+	LDA songTable + SongDescriptor::offsetVoiceC, Y		;Get offset of music data for voice C
 	STA musicOffsetVoiceC
-	LDA songTable+4,Y		;Get offset of music data for voice B
+	LDA songTable + SongDescriptor::offsetVoiceB, Y		;Get offset of music data for voice B
 	STA musicOffsetVoiceB
-	LDA songTable+5,Y		;Get offset of music data for voice D
+	LDA songTable + SongDescriptor::offsetVoiceD, Y		;Get offset of music data for voice D
 	STA musicOffsetVoiceD
 	STA $05F5
 	LDA songTable+6,Y
