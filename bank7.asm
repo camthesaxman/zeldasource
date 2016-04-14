@@ -89,7 +89,7 @@ nmi:
 	LDA PPUSTATUS
 	LDA $E3
 	BEQ lbl_e4ea
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $8521
   lbl_e4ea:
@@ -347,7 +347,7 @@ read_joypads:
 sub_e679:
 	LDA $0010
 	BEQ lbl_e6cd
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $B5EB
 	BEQ lbl_e6cd
@@ -358,7 +358,7 @@ sub_e679:
 	BEQ lbl_e6b8
 	LDA $0098
 	STA local2
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $A3F6
 	LDY local1
@@ -515,7 +515,7 @@ sub_e70e:
 	STA local1
 	LDA #$7C
 	STA local0
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $B81C
 	JMP lbl_e7d7
@@ -535,7 +535,7 @@ sub_e70e:
   lbl_e7cb:
 	TXA
 	TAY
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	LDA #$02
 	JSR $B7C8
@@ -547,7 +547,7 @@ sub_e70e:
 	STA local1
 	LDA #$94
 	STA local0
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JMP $B81C
   lbl_e7ee:
@@ -653,7 +653,7 @@ sub_e862:
 	STA $0301
 	PLA
 	TAX
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $ABC4
 	LDA $00F7
@@ -666,7 +666,7 @@ sub_e862:
 	RTS
 
 sub_e8d8:
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $AC07
 	LDY #$00
@@ -701,7 +701,7 @@ sub_e8f8:
 	INC $00F4
 	RTS
   lbl_e919:
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	LDA $0012
 	JSR switch_jump
@@ -768,7 +768,7 @@ sub_e8f8:
 	JSR set_prg_bank
 	JMP $803E
   lbl_e9a1:
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $82A8
 	LDA $00E3
@@ -798,7 +798,7 @@ sub_e8f8:
 	JSR set_prg_bank
 	JMP $A900
   lbl_e9d8:
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR sub_e625
 	LDA $0013
@@ -855,7 +855,7 @@ sub_ea3d:
 	JSR sub_e5f7
 	JSR $71DE
 	JSR sub_e679
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $8929
 	JMP sub_e78a
@@ -920,7 +920,7 @@ arr_ea62: .byte $3D,$3E,$38,$39,$32,$31,$43,$44,$45
 	LDX #$06
   lbl_eac9:
 	STX $14
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $B05E
 	LDA $10
@@ -928,7 +928,7 @@ arr_ea62: .byte $3D,$3E,$38,$39,$32,$31,$43,$44,$45
 	JSR sub_e6c6
 	JSR $7512
   lbl_eadd:
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $B83A
 	LDY #$00
@@ -957,7 +957,7 @@ arr_ea62: .byte $3D,$3E,$38,$39,$32,$31,$43,$44,$45
 	BNE lbl_eb1f
 	LDA $10
 	BEQ lbl_eb22
-	LDA #$05
+	LDA #5
 	JSR set_prg_bank
 	JSR $9328
   lbl_eb1f:
