@@ -16,6 +16,8 @@
 	.byte $AD, .lobyte(addr), .hibyte(addr)
 .endmacro
 
+segment_start:
+
 lbl_8000:
 	JSR lbl_8006
 	JMP $ED89
@@ -23,44 +25,30 @@ lbl_8006:
 	LDA $E1
 	LDY $10
 	BEQ lbl_8021
-	JSR $E5E2
-	LSR $80,X
-	SEC
-.byte $80
-.byte $57
-.byte $80
-.byte $5E
-.byte $80
-.byte $62
-.byte $80
-.byte $66
-.byte $80
-.byte $76
-.byte $80
-.byte $D4
-.byte $80
-.byte $0F
-.byte $81
+	JSR switch_jump
+	.addr lbl_8056
+	.addr lbl_8038
+	.addr lbl_8057
+	.addr lbl_805e
+	.addr lbl_8062
+	.addr lbl_8066
+	.addr lbl_8076
+	.addr lbl_80d4
+	.addr lbl_810f
+
 lbl_8021:
-	JSR $E5E2
-	LSR $80,X
-	TXS
-	STA ($38,X)
-.byte $80
-.byte $57
-.byte $80
-.byte $5E
-.byte $80
-.byte $62
-.byte $80
-.byte $6C
-.byte $80
-.byte $70
-.byte $80
-.byte $D4
-.byte $80
-.byte $0F
-.byte $81
+	JSR switch_jump
+	.addr lbl_8056
+	.addr lbl_819a
+	.addr lbl_8038
+	.addr lbl_8057
+	.addr lbl_805e
+	.addr lbl_8062
+	.addr lbl_806c
+	.addr lbl_8070
+	.addr lbl_80d4
+	.addr lbl_810f
+
 lbl_8038:
 	JSR $E5F7
 	JSR $71DE
@@ -75,6 +63,7 @@ lbl_8038:
 	STA $5E
 	LDA #$7F
 	STA $5D
+lbl_8056:
 	RTS
 lbl_8057:
 	LDA #$48
@@ -86,13 +75,16 @@ lbl_805b:
 lbl_805e:
 	LDA #$4A
 	BNE lbl_8059
+lbl_8062:
 	LDA #$4C
 	BNE lbl_8059
+lbl_8066:
 	JSR lbl_b23a
 	JMP lbl_805b
 lbl_806c:
 	LDA #$5C
 	BNE lbl_8059
+lbl_8070:
 	JSR lbl_b282
 	JMP lbl_8079
 lbl_8076:
@@ -450,19 +442,15 @@ lbl_8299:
 	JMP lbl_8225
 lbl_82a8:
 	LDA $13
-	JSR $E5E2
-	ASL $BB83
-.byte $82
-.byte $1F
-.byte $83
-.byte $3D
-.byte $83
-.byte $3D
-.byte $83
-.byte $5C
-.byte $83
-.byte $9E
-.byte $83
+	JSR switch_jump
+	.addr lbl_830e
+	.addr lbl_82bb
+	.addr lbl_831f
+	.addr lbl_833d
+	.addr lbl_833d
+	.addr lbl_835c
+	.addr lbl_839e
+
 lbl_82bb:
 	JSR $EA3D
 	JSR $F238
@@ -556,6 +544,7 @@ lbl_8355:
 lbl_8358:
 	LDA #$D0
 	BNE lbl_834a
+lbl_835c:
 	LDA #$00
 	STA $051C
 	LDA $98
@@ -591,6 +580,7 @@ lbl_8397:
 	LDA $051F
 	BNE lbl_838a
 	BEQ lbl_83a3
+lbl_839e:
 	JSR $74B7
 	BNE lbl_83ad
 lbl_83a3:
@@ -673,18 +663,18 @@ lbl_841e:
 	JMP $F238
 lbl_8424:
 	LDA $13
-	JSR $E5E2
-	AND $7E84,Y
-	STY $92
-	STY $A4
-	STY $DF
-	STY $E8
-	STY $BA
-	STY $CC
-	STY $A9
-lbl_843a:
-	BRK
-lbl_843b:
+	JSR switch_jump
+	.addr lbl_8439
+	.addr lbl_847e
+	.addr lbl_8492
+	.addr lbl_84a4
+	.addr lbl_84df
+	.addr lbl_84e8
+	.addr lbl_84ba
+	.addr lbl_84cc
+	
+lbl_8439:
+	LDA #$00
 	STA $E2
 	STA $FD
 	LDA #$08
@@ -724,6 +714,7 @@ lbl_8471:
 	STA $E9
 	LDA $EB
 	JSR lbl_83d7
+lbl_847e:
 	JSR lbl_8484
 	JMP lbl_8501
 lbl_8484:
@@ -823,10 +814,10 @@ lbl_8515:
 lbl_8520:
 	RTS
 lbl_8521:
-	LDA $2002
+	LDA PPUSTATUS
 	AND #$40
 	BEQ lbl_8521
-	LDA $2002
+	LDA PPUSTATUS
 	LDY #$03
 lbl_852d:
 	LDX #$30
@@ -862,13 +853,13 @@ lbl_8550:
 	NOP
 	NOP
 	NOP
-	LDA $2002
+	LDA PPUSTATUS
 	LDA $58
 	LDY $E2
-	STA $2006
-	STY $2006
-	LDA $2007
-	LDA $2007
+	STA PPUADDR
+	STY PPUADDR
+	LDA PPUDATA
+	LDA PPUDATA
 	RTS
 lbl_856d:
 	LDY #$5E
@@ -883,128 +874,32 @@ lbl_856f:
 	AND #$FE
 	ORA $5F
 	STA $FF
-	STA $2000
+	STA PPUCTRL
 	LDA $FD
-	STA $2005
+	STA PPUSCROLL
 	LDA #$00
-	STA $2005
+	STA PPUSCROLL
 lbl_858b:
 	RTS
 lbl_858c:
 	CMP #$11
 	BCS lbl_8593
-	JMP $E625
+	JMP disable_rendering
 lbl_8593:
 	LDA $FF
 	ORA #$01
 	STA $FF
-	STA $2000
+	STA PPUCTRL
 	RTS
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
-.byte $FF
+
+.repeat $63
+	.byte $FF
+.endrepeat
+
 lbl_8600:
-	JSR $E625
+	JSR disable_rendering
 	LDA $13
 	BNE lbl_8613
-	;For some reason, a full 16-bit address, rather than an 8-bit zero page address is used for this instruction
-	;.byte $8D, $5A, $00 ;STA $0005A - I can't seem to force the assembler to not use zero page addressing.
 	STA_absolute $0005A
 	JSR $E46D
 	JSR $EA2B
@@ -1973,22 +1868,16 @@ lbl_8bbc:
 lbl_8be6:
 	RTS
 lbl_8be7:
-	JSR $E5E2
-	INC $8B
-.byte $1A
-.byte $8C
-.byte $28
-.byte $8C
-.byte $6F
-.byte $8C
-.byte $4C
-.byte $8C
-.byte $53
-.byte $8C
-.byte $76
-.byte $8C
-.byte $1A
-.byte $8C
+	JSR switch_jump
+	.addr lbl_8be6
+	.addr lbl_8c1a
+	.addr lbl_8c28
+	.addr lbl_8c6f
+	.addr lbl_8c4c
+	.addr lbl_8c53
+	.addr lbl_8c76
+	.addr lbl_8c1a
+
 lbl_8bfa:
 	LDY $0340
 lbl_8bfd:
@@ -2044,6 +1933,7 @@ lbl_8c4c:
 	LDA $04CF
 	BEQ lbl_8c26
 	BNE lbl_8c1f
+lbl_8c53:
 	LDA $04CF
 	BEQ lbl_8c26
 	LSR
@@ -2058,13 +1948,11 @@ lbl_8c4c:
 	JSR $E862
 	SEC
 	RTS
-.byte $AD
-.byte $72
-.byte $06
-.byte $D0
-.byte $AB
-.byte $18
-.byte $60
+lbl_8c6f:
+	LDA $0672
+	BNE lbl_8c1f
+	CLC
+	RTS
 lbl_8c76:
 	LDA $0350
 	BEQ lbl_8c1f
@@ -2072,35 +1960,25 @@ lbl_8c76:
 	RTS
 lbl_8c7d:
 	LDA $13
-	JSR $E5E2
-	LDA ($8C,X)
-.byte $9C
-.byte $8C
-.byte $AC
-.byte $8C
-.byte $BE
-.byte $8C
-.byte $C3
-.byte $8C
-.byte $C8
-.byte $8C
-.byte $D1
-.byte $8C
-.byte $DA
-.byte $8C
-.byte $FB
-.byte $8C
-.byte $01
-.byte $8D
-.byte $0D
-.byte $8D
-.byte $56
-.byte $8D
-.byte $63
-.byte $8D
+	JSR switch_jump
+	.addr lbl_8ca1
+	.addr lbl_8c9c
+	.addr lbl_8cac
+	.addr lbl_8cbe
+	.addr lbl_8cc3
+	.addr lbl_8cc8
+	.addr lbl_8cd1
+	.addr lbl_8cda
+	.addr lbl_8cfb
+	.addr lbl_8d01
+	.addr lbl_8d0d
+	.addr lbl_8d56
+	.addr lbl_8d63
+
 lbl_8c9c:
 	LDA #$80
 	STA $0602
+lbl_8ca1:
 	JSR lbl_8484
 lbl_8ca4:
 	LDX #$2B
@@ -2169,6 +2047,7 @@ lbl_8d01:
 	STA $E5
 	LDA #$18
 	BNE lbl_8d51
+lbl_8d0d:
 	LDA $33
 	BNE lbl_8d55
 	LDX #$62
@@ -2327,28 +2206,20 @@ lbl_8e1c:
 	LDA $0656
 	CMP #$0F
 	BEQ lbl_8e71
-	JSR $E5E2
-	SEC
-	STX $70DD
-.byte $72
-.byte $8E
-.byte $A6
-.byte $8E
-.byte $4F
-.byte $71
-.byte $71
-.byte $EF
-.byte $A7
-.byte $8E
-.byte $B6
-.byte $8E
-.byte $C7
-.byte $8E
-.byte $AD
-.byte $74
-lbl_8e3a:
-	ASL $0D
-	ADC $06,X
+	JSR switch_jump
+	.addr lbl_8e38
+	.addr $70DD
+	.addr lbl_8e72
+	.addr lbl_8ea6
+	.addr $714F
+	.addr $EF71
+	.addr lbl_8ea7
+	.addr lbl_8eb6
+	.addr lbl_8ec7
+	
+lbl_8e38:
+	LDA $0674
+	ORA $0675
 	BEQ lbl_8e71
 	LDX #$0F
 	LDA $AC,X
@@ -2404,37 +2275,22 @@ lbl_8e8f:
 	STA $70,X
 lbl_8ea6:
 	RTS
-.byte $A2
-.byte $0F
-.byte $B5
-.byte $AC
-.byte $D0
-.byte $19
-.byte $A9
-.byte $FF
-.byte $95
-.byte $28
-.byte $A9
-.byte $80
-.byte $4C
-.byte $14
-.byte $71
-.byte $AD
-.byte $5E
-.byte $06
-.byte $F0
-.byte $0B
-.byte $CE
-.byte $5E
-.byte $06
-.byte $A9
-.byte $01
-.byte $85
-.byte $63
-.byte $A9
-.byte $02
-.byte $85
-.byte $E0
+lbl_8ea7:
+	LDX #$0F
+	LDA $AC,X
+	BNE lbl_8ec6
+	LDA #$FF
+	STA $28,X
+	LDA #$80
+	JMP $7114
+lbl_8eb6:
+	LDA $065E
+	BEQ lbl_8ec6
+	DEC $065E
+	LDA #$01
+	STA $63
+	LDA #$02
+	STA $E0
 lbl_8ec6:
 	RTS
 lbl_8ec7:
@@ -2697,46 +2553,30 @@ lbl_907a:
 	RTS
 lbl_9080:
 	LDA $13
-	JSR $E5E2
-.byte $17
-.byte $B1
-.byte $4F
-.byte $B1
-.byte $30
-.byte $B1
-.byte $4D
-.byte $AB
-.byte $10
-.byte $AC
-.byte $6B
-.byte $B1
-.byte $73
-.byte $B1
-.byte $89
-.byte $6D
-.byte $80
-.byte $B1
+	JSR switch_jump
+	.addr lbl_b117
+	.addr lbl_b14f
+	.addr lbl_b130
+	.addr lbl_ab4d
+	.addr lbl_ac10
+	.addr lbl_b16b
+	.addr lbl_b173
+	.addr $6D89
+	.addr lbl_b180
+
 lbl_9097:
 	LDA $13
-	JSR $E5E2
-.byte $17
-.byte $B1
-.byte $4F
-.byte $B1
-.byte $30
-.byte $B1
-.byte $5E
-.byte $AB
-.byte $10
-.byte $AC
-.byte $6B
-.byte $B1
-.byte $73
-.byte $B1
-.byte $89
-.byte $6D
-.byte $80
-.byte $B1
+	JSR switch_jump
+	.addr lbl_b117
+	.addr lbl_b14f
+	.addr lbl_b130
+	.addr lbl_ab5e
+	.addr lbl_ac10
+	.addr lbl_b16b
+	.addr lbl_b173
+	.addr $6D89
+	.addr lbl_b180
+
 lbl_90ae:
 	LDY #$05
 	LDA $EB
@@ -2794,55 +2634,34 @@ lbl_9105:
 	RTS
 lbl_910a:
 	LDA $13
-	JSR $E5E2
-.byte $17
-.byte $B1
-.byte $33
-.byte $B1
-.byte $3C
-.byte $B1
-.byte $62
-.byte $AB
-.byte $10
-.byte $AC
-.byte $2C
-.byte $B1
-.byte $43
-.byte $B1
-.byte $3C
-.byte $B1
-.byte $99
-.byte $B1
-.byte $CD
-.byte $B1
-.byte $A0
-.byte $00
-.byte $F0
-.byte $02
-.byte $A0
-.byte $01
-.byte $84
-.byte $0C
-.byte $BC
-.byte $4F
-.byte $03
-.byte $C8
-.byte $85
-.byte $0D
-.byte $84
-.byte $0E
-.byte $86
-.byte $08
-.byte $A9
-.byte $40
-.byte $8D
-.byte $43
-.byte $03
-.byte $A9
-.byte $44
-.byte $4C
-.byte $04
-.byte $78
+	JSR switch_jump
+	.addr lbl_b117
+	.addr lbl_b133
+	.addr lbl_b13c
+	.addr lbl_ab62
+	.addr lbl_ac10
+	.addr lbl_b12c
+	.addr lbl_b143
+	.addr lbl_b13c
+	.addr lbl_b199
+	.addr lbl_b1cd
+
+;9123
+lbl_9123:
+	LDY #$00
+	BEQ lbl_9129
+	LDY #$01
+lbl_9129:
+	STY $0C
+	LDY $034F,X
+	INY
+	STA $0D
+	STY $0E
+	STX $08
+	LDA #$40
+	STA $0343
+	LDA #$44
+	JMP $7804
 lbl_913f:
 	LDA $53
 	BEQ lbl_915e
@@ -2978,24 +2797,20 @@ lbl_921b:
 	RTS
 lbl_9220:
 	AND #$07
-	JSR $E5E2
-	AND $3592,Y
-.byte $92
-.byte $3A
-.byte $92
-.byte $3A
-.byte $92
-.byte $4A
-.byte $92
-.byte $6B
-.byte $92
-.byte $6B
-.byte $92
-.byte $51
-.byte $92
+	JSR switch_jump
+	.addr lbl_9239
+	.addr lbl_9235
+	.addr lbl_923a
+	.addr lbl_923a
+	.addr lbl_924a
+	.addr lbl_926b
+	.addr lbl_926b
+	.addr lbl_9251
+
 lbl_9235:
 	LDY #$FF
 	STY $0E
+lbl_9239:
 	RTS
 lbl_923a:
 	LDA $28
@@ -8084,7 +7899,7 @@ lbl_a82d:
 	RTS
 lbl_a833:
 	LDA #$04
-	STA $0600
+	STA musicRequest
 	LDA #$20
 	STA $7C
 	LDA #$01
@@ -8168,7 +7983,7 @@ lbl_a8ab:
 	LDA $FF
 	AND #$FB
 	STA $FF
-	STA $2000
+	STA PPUCTRL
 	JMP lbl_b547
 lbl_a8be:
 	JSR lbl_a9f4
@@ -8617,6 +8432,7 @@ lbl_ab4f:
 lbl_ab5e:
 	LDX #$02
 	BNE lbl_ab4f
+lbl_ab62:
 	LDA #$00
 	STA $E9
 	LDX #$04
@@ -9872,32 +9688,21 @@ lbl_b0f1:
 	RTS
 lbl_b0fc:
 	LDA $13
-	JSR $E5E2
-.byte $17
-.byte $B1
-.byte $53
-.byte $B1
-.byte $47
-.byte $B1
-.byte $3C
-.byte $B1
-.byte $20
-.byte $AC
-.byte $10
-.byte $AC
-.byte $66
-.byte $B1
-.byte $73
-.byte $B1
-.byte $4B
-.byte $B1
-.byte $3C
-.byte $B1
-.byte $5A
-.byte $B1
-.byte $A9
-.byte $00
-lbl_b119:
+	JSR switch_jump
+	.addr lbl_b117
+	.addr lbl_b153
+	.addr lbl_b147
+	.addr lbl_b13c
+	.addr lbl_ac20
+	.addr lbl_ac10
+	.addr lbl_b166
+	.addr lbl_b173
+	.addr lbl_b14b
+	.addr lbl_b13c
+	.addr lbl_b15a
+
+lbl_b117:
+	LDA #$00
 	STA $E9
 	STA $EE
 	LDA $10
@@ -9920,18 +9725,23 @@ lbl_b135:
 	LDY $10
 	BEQ lbl_b130
 	JSR lbl_87b3
+lbl_b13c:
 	LDY $10
 	BEQ lbl_b130
 	JMP lbl_8cfb
 lbl_b143:
 	LDA #$A0
 	BNE lbl_b135
+lbl_b147:
 	LDA #$20
 	BNE lbl_b135
+lbl_b14b:
 	LDA #$80
 	BNE lbl_b135
+lbl_b14f:
 	LDA #$3E
 	BNE lbl_b12e
+lbl_b153:
 	LDA $10
 	BNE lbl_b130
 	JMP $EA2B
@@ -12762,15 +12572,15 @@ lbl_bf50:
 	SEI
 	CLD
 	LDA #$00
-	STA $2000
+	STA PPUCTRL
 	LDX #$FF
 	TXS
 lbl_bf5a:
-	LDA $2002
+	LDA PPUSTATUS
 	AND #$80
 	BEQ lbl_bf5a
 lbl_bf61:
-	LDA $2002
+	LDA PPUSTATUS
 	AND #$80
 	BEQ lbl_bf61
 	ORA #$FF

@@ -32,7 +32,7 @@ sub_e45e:
 sub_e46d:
 	JSR sub_e5f7
 	JSR sub_e580
-	JSR sub_e625
+	JSR disable_rendering
 	LDA #$20
 	JSR sub_e47d
 	LDA #$28
@@ -232,7 +232,8 @@ sub_e580:
   	RTS
 
 ;E5E2
-switch_jump:
+.proc switch_jump
+.export switch_jump
 ;Jumps to a specified address in a jump table. Useful for implementing switch constructs.
 ;A call to this function (JSR sub_e5e2) must be immediately followed by an array of jump addresses.
 ;Because this function is called with the JSR instruction, the address of the jump table is
@@ -251,6 +252,7 @@ switch_jump:
 	LDA (local0),Y
 	STA local3
 	JMP (local2)	;Go to jump address.
+.endproc
 
 sub_e5f7:
 	LDY #0
@@ -284,13 +286,16 @@ sub_e608:
 	STA $0302
 	RTS
 
-sub_e625:
+;E625
+.proc disable_rendering
+.export disable_rendering
   	LDA #0
   	STA PPUMASK
   	STA ppuMaskVal
   	RTS
+.endproc
 
-
+;E62D
 read_joypads:
 	;Reset and clear strobe of joypad port by writing 1 and then 0 to the register.
 	LDA #$01
@@ -748,7 +753,7 @@ sub_e8f8:
 	JSR set_prg_bank
 	JMP $A28A
   lbl_e977:
-	JSR sub_e625
+	JSR disable_rendering
 	LDA $0013
 	BNE lbl_e999
 	JSR sub_ea00
@@ -800,7 +805,7 @@ sub_e8f8:
   lbl_e9d8:
 	LDA #5
 	JSR set_prg_bank
-	JSR sub_e625
+	JSR disable_rendering
 	LDA $0013
 	JSR switch_jump
 	.addr lbl_e9f7
@@ -1022,7 +1027,7 @@ sub_eb30:
 	JSR set_prg_bank
 	JMP $A858
   lbl_eb96:
-	JSR sub_e625
+	JSR disable_rendering
 	LDA #$06
 	JSR set_prg_bank
 	JSR $8109

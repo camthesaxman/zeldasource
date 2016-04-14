@@ -1,3 +1,4 @@
+; Variables
 .globalzp local0
 .globalzp local1
 .globalzp local2
@@ -20,3 +21,7 @@
 .global musicOffsetVoiceD
 .global noteDuration
 .global musicTimer
+
+; Functions
+.global switch_jump
+.global disable_rendering
