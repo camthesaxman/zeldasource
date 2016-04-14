@@ -35,7 +35,7 @@ songTable:
 .byte songDescriptor22 - songTable
 .byte songDescriptor23 - songTable
 .byte songDescriptor24 - songTable
-.byte songDescriptor20 - songTable
+.byte songDescriptor25 - songTable
 .byte songDescriptor26 - songTable
 .byte songDescriptor27 - songTable
 .byte songDescriptor28 - songTable
