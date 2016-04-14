@@ -29,7 +29,8 @@ APU_MODCTRL     = $4010
 APU_MODDA       = $4011
 APU_MODADDR     = $4012
 APU_MODLEN      = $4013
-APU_SPR_DMA     = $4014
 APU_CHANCTRL    = $4015
-APU_PAD1        = $4016
-APU_PAD2        = $4017
+
+; Joypad registers
+JOYPAD1	        = $4016
+JOYPAD2	        = $4017

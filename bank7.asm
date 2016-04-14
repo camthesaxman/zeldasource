@@ -1,5 +1,6 @@
 .include "nes.inc"
 .include "zelda.inc"
+.include "audio.inc"
 
 ;Program ROM Bank 7
 .segment "PRG_7"
@@ -14,12 +15,12 @@ main:
 	JSR $B4AC
 	JSR $B4E8
 	JSR sub_e45e
-	LDA $FF
+	LDA ppuCtrlVal
 	ORA #$A0
 	STA PPUCTRL
-	STA $FF
+	STA ppuCtrlVal
   endless_loop:
-	JMP endless_loop ;Go into an infinite loop
+	JMP endless_loop
 
 sub_e45e:
 	LDA #$00
@@ -43,16 +44,16 @@ sub_e47d:
 ;E484
 nmi:
 ;Non-maskable interrupt handler
-	LDA $00FF
+	LDA ppuCtrlVal
 	LDX $005C
 	BEQ lbl_e48c
 	EOR #$02
   lbl_e48c:
 	AND #$7F
-	STA $00FF
+	STA ppuCtrlVal
 	AND #$7E
 	STA PPUCTRL
-	LDA $00FE
+	LDA ppuMaskVal
 	LDY $00E3
 	BNE lbl_e4a3
 	LDY $0014
@@ -63,27 +64,28 @@ nmi:
 	ORA #$1E
   lbl_e4a5:
 	STA PPUMASK
-	STA $00FE
-	LDA #$00
+	STA ppuMaskVal
+	LDA #0
 	STA OAMADDR
-	LDA #$02
-	STA APU_SPR_DMA
-	LDA #$00
+	LDA #$02	;Transfer data from $200-$2FF to OAM using DMA.
+	STA OAMDMA	;Writing N to this register causes a transfer of 256 bytes from address N * $100.
+	LDA #0
 	STA PPUSCROLL
 	STA PPUSCROLL
-	LDA #$06
+	LDA #6
 	JSR set_prg_bank
 	JSR $A080
 	LDA #$3F
 	STA PPUADDR
-	LDA #$00
+	LDA #0
 	STA PPUADDR
 	STA PPUADDR
 	STA PPUADDR
-  lbl_e4d4:
+	; Wait for the sprite 0 hit flag to be set. Something to do with raster timing.
+  wait_for_sprite0_hit:
 	LDA PPUSTATUS
-	AND #$40
-	BNE lbl_e4d4
+	AND #%01000000
+	BNE wait_for_sprite0_hit
 	LDA PPUSTATUS
 	LDA $E3
 	BEQ lbl_e4ea
@@ -111,7 +113,7 @@ nmi:
   	STA PPUSCROLL
   	LDA $00FC
   	STA PPUSCROLL
-  	LDA $00FF
+  	LDA ppuCtrlVal
   	STA PPUCTRL
   lbl_e518:
   	LDA $00E1
@@ -120,46 +122,46 @@ nmi:
   	LDX #$26
   	LDA #$3C
   	LDY #$4E
-  	STX $0000
+  	STX local0
   	DEC $00,X
   	BPL lbl_e52f
   	LDA #$09
-  	STA $00,X
+  	STA local0,X
   	TYA
   lbl_e52f:
   	TAX
   lbl_e530:
-  	LDA $00,X
+  	LDA local0,X
   	BEQ lbl_e536
-  	DEC $00,X
+  	DEC local0,X
   lbl_e536:
   	DEX
-  	CPX $0000
+  	CPX local0
   	BNE lbl_e530
   lbl_e53b:
   	LDA $00E3
   	BNE :+
-  	JSR sub_e62d
+  	JSR read_joypads
 	:
   	LDX #$18
   	LDY #$0D
-  	LDA $00,X
+  	LDA local0,X
   	AND #$02
-  	STA $0000
+  	STA local0
   	LDA $01,X
   	AND #$02
-  	EOR $0000
+  	EOR local0
   	CLC
   	BEQ lbl_e556
   	SEC
   lbl_e556:
-  	ROR $00,X
+  	ROR local0,X
   	INX
   	DEY
   	BNE lbl_e556
-  	LDA #$00
+  	LDA #0
   	JSR set_prg_bank
-  	JSR $9825
+  	JSR process_audio
   	INC $0015
   	LDA $0011
   	BNE lbl_e570
@@ -169,10 +171,10 @@ nmi:
   	JSR sub_eb30
   lbl_e573:
   	LDA PPUSTATUS
-  	LDA $00FF
+  	LDA ppuCtrlVal
   	ORA #$80
   	STA PPUCTRL
-  	STA $00FF
+  	STA ppuCtrlVal
   	RTI
 
 sub_e580:
@@ -183,37 +185,37 @@ sub_e580:
 	STA $00FC
 	LDA #$30
 	STA PPUCTRL
-	STA $00FF
+	STA ppuCtrlVal
 	RTS
 
   lbl_e594:
-	STA $0000
-	STX $0001
-	STY $0002
+	STA local0
+	STX local1
+	STY local2
 	LDA PPUSTATUS
-	LDA $00FF
+	LDA ppuCtrlVal
 	AND #$FB
 	STA PPUCTRL
-	STA $00FF
-	LDA $0000
+	STA ppuCtrlVal
+	LDA local0
 	STA PPUADDR
 	LDY #$00
 	STY PPUADDR
 	LDX #$04
 	CMP #$20
 	BCS lbl_e5B8
-	LDX $0002
+	LDX local2
   lbl_e5B8:
   	LDY #$00
-  	LDA $0001
+  	LDA local1
   lbl_e5Bc:
   	STA PPUDATA
   	DEY
   	BNE lbl_e5Bc
   	DEX
   	BNE lbl_e5Bc
-  	LDY $0002
-  	LDA $0000
+  	LDY local2
+  	LDA local0
   	CMP #$20
   	BCC lbl_e5df
   	ADC #$02
@@ -226,7 +228,7 @@ sub_e580:
   	DEX
   	BNE lbl_e5d9
   lbl_e5df:
-  	LDX $0001
+  	LDX local1
   	RTS
 
 ;E5E2
@@ -239,20 +241,20 @@ switch_jump:
 	ASL			;multiply index by 2 because addresses are 2 bytes
 	TAY
 	PLA			;Pull the jump table address from stack and store it.
-	STA $0000
+	STA local0
 	PLA			;Pull the return address (caller's caller) from the stack and store it.
-	STA $0001
+	STA local1
 	INY			;Store the low order byte of jump address in $02
-	LDA ($00),Y
-	STA $0002
+	LDA (local0),Y
+	STA local2
 	INY			;Store the high order byte of jump address in $03
-	LDA ($00),Y
-	STA $0003
-	JMP ($0002)	;Go to jump address.
+	LDA (local0),Y
+	STA local3
+	JMP (local2)	;Go to jump address.
 
 sub_e5f7:
-	LDY #$0
-	LDX #$40
+	LDY #0
+	LDX #64
   lbl_e5fb:
 	LDA #$F8
 	STA $0200,Y
@@ -266,11 +268,11 @@ sub_e5f7:
 
 sub_e608:
 	STA local1
-	LDA #$0
+	LDA #0
 	STA local0
   lbl_e60e:
-	LDA #$0
-	STA ($00),Y
+	LDA #0
+	STA (local0),Y
 	DEY
 	CPY #$FF
 	BNE lbl_e60e
@@ -283,44 +285,54 @@ sub_e608:
 	RTS
 
 sub_e625:
-  	LDA #$00
+  	LDA #0
   	STA PPUMASK
-  	STA $00FE
+  	STA ppuMaskVal
   	RTS
 
-sub_e62d:
+
+read_joypads:
+	;Reset and clear strobe of joypad port by writing 1 and then 0 to the register.
 	LDA #$01
-	STA APU_PAD1
+	STA JOYPAD1
 	LDA #$00
-	STA APU_PAD1
-	STA $0003
-	STA $0004
-	TAX
-	JSR sub_e640
+	STA JOYPAD1
+	STA local3
+	STA local4
+	TAX					;A = 0, X = 0
+	JSR read_port_bits	;Read player 1's controller state, X = 0
 	INX
-sub_e640:
-	STA $0002
+	;Fall through and run read_port_bits for X = 1
+	
+.proc read_port_bits
+;Parameters: X = the controller port to read (0 for player 1, 1 for player 2), A = 0
+	;Reset and clear strobe of joypad port.
+	STA local2
 	LDA #$01
-	STA APU_PAD1
+	STA JOYPAD1
 	LDA #$00
-	STA APU_PAD1
-	LDY #$08
-  lbl_e64e:
-	LDA APU_PAD1,X
+	STA JOYPAD1
+	;Each read from the JOYPAD1 register returns a button's state. A value of 1 indicates that the
+	;button is pressed, while a value of 0 indicates that the button is not pressed. The 8 button
+	;states are returned in the following order: A, B, Select, Start, Up, Down, Left, Right
+	LDY #8	;Do this 8 times
+  get_button_state:
+	LDA JOYPAD1,X
 	LSR
 	ROL $F8,X
 	LSR
-	ROL $0000
+	ROL local0
 	DEY
-	BNE lbl_e64e
+	BNE get_button_state
+	
 	LDA $F8,X
-	CMP $0002
-	BNE sub_e640
-	INC $03,X
-	LDY $03,X
+	CMP local2
+	BNE read_port_bits
+	INC local3,X
+	LDY local3,X
 	CPY #$02
-	BCC sub_e640
-	LDA $0000
+	BCC read_port_bits
+	LDA local0
 	ORA $F8,X
 	STA $F8,X
 	PHA
@@ -330,6 +342,7 @@ sub_e640:
 	PLA
 	STA $FA,X
 	RTS
+.endproc
 
 sub_e679:
 	LDA $0010
@@ -344,11 +357,11 @@ sub_e679:
 	LDY $0010
 	BEQ lbl_e6b8
 	LDA $0098
-	STA $0002
+	STA local2
 	LDA #$05
 	JSR set_prg_bank
 	JSR $A3F6
-	LDY $0001
+	LDY local1
   lbl_e6a1:
 	STY $00E7
 	JSR switch_jump
@@ -370,17 +383,17 @@ sub_e679:
 sub_e6c6:
 	JSR sub_e6ce
 	ORA #$20
-	STA ($00),Y
+	STA (local0),Y
   lbl_e6cd:
 	RTS
 
 sub_e6ce:
 	LDA $6BAF
-	STA $0000
+	STA local0
 	LDA $6BB0
-	STA $0001
+	STA local1
 	LDY $00EB
-	LDA ($00),Y
+	LDA (local0),Y
 	RTS
 
   lbl_e6dd:
@@ -428,7 +441,7 @@ sub_e70e:
 	BEQ lbl_e731
 	AND #$0F
   lbl_e727:
-	STA $0004
+	STA local4
 	LDA $72A4,X
 	TAX
 	TAY
@@ -437,7 +450,7 @@ sub_e70e:
 	LDA #$FF
 	BNE lbl_e727
 	LDA $0657,X
-	STA $0004
+	STA local4
   lbl_e73a:
 	LDA $72EC,X
 	CPX #$16
@@ -474,7 +487,7 @@ sub_e70e:
 
   lbl_e773:
 	CLC
-	ADC $0004
+	ADC local4
 	CPX #$00
 	BNE lbl_e76a
 	CMP #$02
@@ -497,11 +510,11 @@ sub_e70e:
 	LSR
 	ORA #$01
   lbl_e7a0:
-	STA $0004
+	STA local4
 	LDA #$1F
-	STA $0001
+	STA local1
 	LDA #$7C
-	STA $0000
+	STA local0
 	LDA #$05
 	JSR set_prg_bank
 	JSR $B81C
@@ -527,13 +540,13 @@ sub_e70e:
 	LDA #$02
 	JSR $B7C8
   lbl_e7d7:
-	LDX #$00
+	LDX #0
 	LDA $0657,X
 	BEQ lbl_e847
 	LDA #$1F
-	STA $0001
+	STA local1
 	LDA #$94
-	STA $0000
+	STA local0
 	LDA #$05
 	JSR set_prg_bank
 	JMP $B81C
@@ -586,7 +599,7 @@ sub_e7fe:
 	LDY $0010
 	BEQ lbl_e859
 	LDA $EBE0,Y
-	STA $0600
+	STA musicRequest
   lbl_e859:
 	RTS
 
@@ -601,15 +614,15 @@ sub_e862:
 	TXA
 	PHA
 	LDA $70,X
-	STA $0003
+	STA local3
 	LDA $84,X
-	STA $0002
+	STA local2
 	JSR $7570
 	LDX $0301
-	LDA $0000
+	LDA local0
 	STA $0302,X
 	STA $0307,X
-	LDA $0001
+	LDA local1
 	STA $0303,X
 	STA $0308,X
 	INC $0308,X
@@ -661,10 +674,10 @@ sub_e8d8:
 	LDA $000A
 	STA ($00),Y
 	JSR $7274
-	LDA $0000
+	LDA local0
 	CMP #$F0
 	BNE lbl_e8e2
-	LDA $0001
+	LDA local1
 	CMP #$67
 	BNE lbl_e8e2
 	RTS
@@ -876,7 +889,7 @@ arr_ea62: .byte $3D,$3E,$38,$39,$32,$31,$43,$44,$45
 	LDA $5A
 	BNE lbl_ea98
 	LDA #$04
-	STA $0602
+	STA musicEffectRequest
   lbl_ea98:
 	LDX #$20
 	LDA $035A
@@ -1051,7 +1064,7 @@ arr_ebe0: .byte $01,$40,$40,$40,$40,$40,$40,$40,$40,$20
   lbl_ebea:
 	LDY $10
 	LDA arr_ebe0,Y
-	STA $0600
+	STA musicRequest
   lbl_ebf2:
 	JSR sub_eba1
 	STA $0394
@@ -1086,15 +1099,16 @@ arr_ebe0: .byte $01,$40,$40,$40,$40,$40,$40,$40,$40,$20
   lbl_ec2c:
 	LDA $E1
 	BNE lbl_ec58
-	LDA $E0
+	LDA gamePaused
 	CMP #$02
 	BEQ lbl_ec49
 	LDA $F8
 	AND #$20
 	BEQ lbl_ec49
-	LDA $E0
+	;Toggle pause state
+	LDA gamePaused
 	EOR #$01
-	STA $E0
+	STA gamePaused
 	BNE lbl_ec49
 	LDA #$0F
 	STA APU_CHANCTRL
@@ -1169,7 +1183,7 @@ arr_ebe0: .byte $01,$40,$40,$40,$40,$40,$40,$40,$40,$20
 	EOR #$FF
 	STA $61
 	LDA $62
-	EOR #$Ff
+	EOR #$FF
 	STA $62
   lbl_ecde:
 	LDX $0340
@@ -1199,9 +1213,9 @@ arr_ebe0: .byte $01,$40,$40,$40,$40,$40,$40,$40,$40,$20
 	LDA $066F
 	AND #$0F
 	BNE lbl_ed27
-	LDA $0604
+	LDA soundEffectRequest
 	ORA #$40
-	STA $0604
+	STA soundEffectRequest
   lbl_ed27:
 	LDA $10
 	BEQ lbl_ed4f
@@ -1359,9 +1373,9 @@ sub_edfa:
 	LSR A
 	TAY
 	LDA $E400,Y
-	STA $0000
+	STA local0
 	LDA $E401,Y
-	STA $0001
+	STA local1
 	PLA
 	SEC
 	SBC #$40
@@ -1451,7 +1465,7 @@ sub_edfa:
 	RTS
   lbl_eeeb:
 	LDA #$04
-	STA $0003
+	STA local3
   lbl_eeef:
 	LDA $0394,X
 	BNE lbl_eF05
@@ -1485,11 +1499,11 @@ sub_edfa:
 	BNE lbl_ef2e
 	LDY #$FF
   lbl_ef2e:
-	STY $0002
+	STY local2
 	DEC $D3,X
 	LDA $0394,X
 	CLC
-	ADC $0002
+	ADC local2
 	STA $0394,X
 	AND #$0F
 	BEQ lbl_ef47
@@ -1505,16 +1519,16 @@ sub_edfa:
 	BEQ lbl_ef5a
 	LDA $70,X
 	CLC
-	ADC $0002
+	ADC local2
 	STA $70,X
 	JMP lbl_ef61
   lbl_ef5a:
 	LDA $84,X
 	CLC
-	ADC $0002
+	ADC local2
 	STA $84,X
   lbl_ef61:
-	DEC $0003
+	DEC local3
 	BNE lbl_eeef
 	RTS
 
@@ -1803,8 +1817,8 @@ sub_f149:
 	BNE lbl_f174
 	LDX $70
   lbl_f174:
-	STX $0000
-	LDA $0000
+	STX local0
+	LDA local0
 	CMP arr_f0df,Y
 	BNE lbl_f195
 	LDA $6DC3,Y
@@ -2100,10 +2114,10 @@ sub_f36f:
 	PHA
 	AND #$03
 	BEQ lbl_f3a2
-	LDA $0001
+	LDA local1
 	CLC
 	ADC #$03
-	STA $0001
+	STA local1
   lbl_f3a2:
 	PLA
 	JSR $7013
@@ -2173,17 +2187,17 @@ sub_f36f:
 	RTS
   lbl_f41d:
 	LDA $98,X
-	STA $0002
-	STA $0003
+	STA local2
+	STA local3
 	LDA #$00
 	STA $0F
 	LDY #$03
   lbl_f429:
 	TYA
 	PHA
-	LDA $0002
+	LDA local2
 	PHA
-	LDA $0003
+	LDA local3
 	PHA
 	LDA $15
 	AND #$03
@@ -2191,8 +2205,8 @@ sub_f36f:
 	JSR $7988
 	LDA $70,X
 	CLC
-	ADC $0002
-	STA $0000
+	ADC local2
+	STA local0
 	CMP $70,X
 	BCC lbl_f450
 	CMP #$FC
@@ -2203,14 +2217,14 @@ sub_f36f:
   lbl_f450:
 	LDA $70,X
 	SEC
-	SBC $0000
+	SBC local0
   lbl_f455:
 	CMP #$20
 	BCS lbl_f475
 	LDA $84,X
 	CLC
-	ADC $0003
-	STA $0001
+	ADC local3
+	STA local1
 	LDY $10
 	BEQ lbl_f46c
 	CMP #$3e
@@ -2224,9 +2238,9 @@ sub_f36f:
 	JSR $7915
   lbl_f475:
 	PLA
-	STA $0003
+	STA local3
 	PLA
-	STA $0002
+	STA local2
 	PLA
 	PHA
 	TAY
@@ -2234,11 +2248,11 @@ sub_f36f:
 	BNE lbl_f484
 	LDY #$03
   lbl_f484:
-	LDA $0000,Y
+	LDA local0,Y
 	EOR #$Ff
 	CLC
 	ADC #$01
-	STA $0000,Y
+	STA local0,Y
 	PLA
 	TAY
 	DEY
@@ -2301,7 +2315,7 @@ sub_f4a0:
 	LDA $AC,X
 	BEQ lbl_f49f
 	LDA #$00
-	STA $0000
+	STA local0
 	LDA $AC,X
 	AND #$F0
 	CMP #$10
@@ -2467,7 +2481,7 @@ sub_f4a0:
 	LDA $042C,X
   lbl_f64d:
 	JSR $704A
-	LDA $0000
+	LDA local0
 	CMP #$02
 	BNE lbl_f691
 	LDA #$00
@@ -2543,12 +2557,12 @@ sub_f4a0:
 	STA $AC,X
   lbl_f6e8:
 	LDA #$00
-	STA $0000
+	STA local0
 	LDA $AC,X
 	AND #$0F
 	TAY
 	LDA #$00
-	STA $0001
+	STA local1
 	LDA $F4E5,Y
 	STA $0C
 	TYA
@@ -2567,19 +2581,19 @@ sub_f4a0:
 	JMP lbl_f720
   lbl_f714:
 	LDA $F511,Y
-	STA $0000
+	STA local0
 	LDA $F515,Y
-	STA $0001
+	STA local1
 	LDY #$02
   lbl_f720:
 	LDA $70,X
 	CLC
-	ADC $0000
-	STA $0000
+	ADC local0
+	STA local0
 	LDA $84,X
 	CLC
-	ADC $0001
-	STA $0001
+	ADC local1
+	STA local1
 	LDA $AC,X
 	AND #$F0
 	CMP #$20
@@ -2705,7 +2719,7 @@ sub_f769:
 	BCS lbl_f854
   lbl_f823:
 	LDA #$04
-	STA $0604
+	STA soundEffectRequest
 	LDA #$80
   lbl_f82a:
 	STA $AC,X
@@ -2832,11 +2846,11 @@ sub_f90d:
 	LDA $70,X
 	CLC
 	ADC #$08
-	STA $0002,Y
+	STA local2,Y
 	LDA $84,X
 	CLC
 	ADC #$08
-	STA $0003,Y
+	STA local3,Y
   lbl_f91d:
 	RTS
 
@@ -3532,7 +3546,7 @@ sub_fe98:
 	RTS
   lbl_fea6:
 	LDA #$20
-	STA $0602
+	STA musicEffectRequest
 	LDA #$10
 	STA $0405,X
 	RTS
